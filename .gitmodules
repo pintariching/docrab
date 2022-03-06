@@ -1,3 +1,6 @@
 [submodule "docrab-api"]
 	path = docrab-api
 	url = ./docrab-api/
+[submodule "docrab-web"]
+	path = docrab-web
+	url = ./docrab-web/
