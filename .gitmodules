@@ -6,4 +6,4 @@
 	url = https://github.com/pintariching/docrab-web.git
 [submodule "docrab-worker"]
 	path = docrab-worker
-	url = ./docrab-worker/
+	url = https://github.com/pintariching/docrab-worker.git
