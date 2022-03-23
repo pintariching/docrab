@@ -1,3 +1,7 @@
+use std::path::PathBuf;
+
+use dotenv::dotenv;
+
 pub enum RoutingKeys {
 	WorkerQueue
 }
@@ -32,5 +36,24 @@ impl Job {
 			"DELETE" => Ok(Job::Delete),
 			_ => Err(())
 		}
+	}
+}
+
+pub enum EnvironmentVariable {
+	DatabaseUrl,
+	RabbitMQUrl,
+	FileRoot
+}
+
+pub fn get_environment_variable(variable: EnvironmentVariable) -> String {
+	dotenv().ok();
+
+	match variable {
+		EnvironmentVariable::DatabaseUrl => std::env::var("DATABASE_URL")
+			.expect("DATABASE_URL environment variable is not set"),
+		EnvironmentVariable::RabbitMQUrl => std::env::var("RABBITMQ_URL")
+			.expect("RABBITMQ_URL environment variable is not set"),
+		EnvironmentVariable::FileRoot => std::env::var("FILE_ROOT")
+			.expect("FILE_ROOT environment variable is not set"),
 	}
 }
