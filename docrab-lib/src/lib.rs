@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::env;
 
 use dotenv::dotenv;
 
@@ -49,11 +49,11 @@ pub fn get_environment_variable(variable: EnvironmentVariable) -> String {
 	dotenv().ok();
 
 	match variable {
-		EnvironmentVariable::DatabaseUrl => std::env::var("DATABASE_URL")
-			.expect("DATABASE_URL environment variable is not set"),
-		EnvironmentVariable::RabbitMQUrl => std::env::var("RABBITMQ_URL")
-			.expect("RABBITMQ_URL environment variable is not set"),
-		EnvironmentVariable::FileRoot => std::env::var("FILE_ROOT")
-			.expect("FILE_ROOT environment variable is not set"),
+		EnvironmentVariable::DatabaseUrl => env::var("DATABASE_URL")
+												.expect("DATABASE_URL environment variable is not set"),
+		EnvironmentVariable::RabbitMQUrl => env::var("RABBITMQ_URL")
+												.expect("RABBITMQ_URL environment variable is not set"),
+		EnvironmentVariable::FileRoot => env::var("FILE_ROOT")
+												.expect("FILE_ROOT environment variable is not set"),
 	}
 }
