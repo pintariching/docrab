@@ -1,6 +1,4 @@
-use std::env;
-
-use dotenv::dotenv;
+use serde::{Serialize, Deserialize};
 
 pub enum RoutingKeys {
 	WorkerQueue
@@ -14,6 +12,7 @@ impl RoutingKeys {
 	}
 }
 
+#[derive(Serialize, Deserialize)]
 pub enum Job {
 	Convert,
 	Ocr,
@@ -39,21 +38,32 @@ impl Job {
 	}
 }
 
-pub enum EnvironmentVariable {
-	DatabaseUrl,
-	RabbitMQUrl,
-	FileRoot
+#[derive(Serialize, Deserialize)]
+pub struct File {
+	pub file: Vec<u8>,
+	pub file_name: String,
+	pub file_size: usize,
+	pub uuid: String
 }
 
-pub fn get_environment_variable(variable: EnvironmentVariable) -> String {
-	dotenv().ok();
+#[derive(Serialize, Deserialize)]
+pub struct JobPayload {
+	pub job: Job,
+	pub file: File
+}
 
-	match variable {
-		EnvironmentVariable::DatabaseUrl => env::var("DATABASE_URL")
-												.expect("DATABASE_URL environment variable is not set"),
-		EnvironmentVariable::RabbitMQUrl => env::var("RABBITMQ_URL")
-												.expect("RABBITMQ_URL environment variable is not set"),
-		EnvironmentVariable::FileRoot => env::var("FILE_ROOT")
-												.expect("FILE_ROOT environment variable is not set"),
+impl JobPayload {
+	pub fn to_payload(&self) -> Result<Vec<u8>, String> {
+		match serde_json::to_string(self) {
+			Ok(s) => return Ok(s.as_bytes().to_vec()),
+			Err(e) => return Err(e.to_string())
+		}
+	}
+
+	pub fn from_payload(bytes: &[u8]) -> Result<JobPayload, String> {
+		match serde_json::from_slice(bytes) {
+			Ok(job_payload) => Ok(job_payload),
+			Err(e) => Err(e.to_string())
+		}
 	}
 }
