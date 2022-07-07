@@ -13,7 +13,7 @@ use uuid::Uuid;
 
 use crate::broker::Mq;
 use crate::db::Db;
-use crate::files::FileDir;
+use crate::files::{FileDirectory, create_file};
 use crate::models::document_file::{DocumentFile, NewDocumentFile, DocumentFileMessage};
 use crate::errors::{ApiError};
 use crate::schema::document_file;
@@ -60,38 +60,21 @@ use docrab_lib::{Task, RoutingKeys, JobPayload};
 pub async fn upload(
 	db: Db,
 	mq: &State<Mq>,
-	root: &State<FileDir>,
+	root: &State<FileDirectory>,
 	id: i64,
-	mut file: Form<TempFile<'_>>
+	file: Form<TempFile<'_>>
 ) -> Result<Created<Json<DocumentFile>>, (Status, Json<ApiError>)> {
-	let root_path = Path::new(&root.0);
-	let uuid = Uuid::new_v4().to_string();
-	
-	let file_name = match file.name() {
-		Some(n) => format!("{}-{}", n, uuid),
-		None => uuid
-	};
-
-	let root_path = root_path.join(&file_name);
-
-	if let Err(e) = file.persist_to(root_path
-		)
+	let new_document_file = match 
+		create_file(id, file.into_inner(), &root.0)
 		.await {
-		return Err(ApiError::internal_server_error(&e.to_string()));
-	}
-
-	let document_file = NewDocumentFile {
-		label: Some(String::new()),
-		document_id: Some(id),
-		version: Some(String::new()),
-		filename: Some(file_name)
+		Ok(f) => f,
+		Err(e) => return Err(e),
 	};
 
-	
 	let created_file = match db
 		.run(move |c| {
 			diesel::insert_into(document_file::table)
-				.values(document_file)
+				.values(new_document_file)
 				.get_result::<DocumentFile>(c)
 		})
 		.await
