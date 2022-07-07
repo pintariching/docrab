@@ -1,9 +1,0 @@
-[submodule "docrab-api"]
-	path = docrab-api
-	url = https://github.com/pintariching/docrab-api.git
-[submodule "docrab-web"]
-	path = docrab-web
-	url = https://github.com/pintariching/docrab-web.git
-[submodule "docrab-worker"]
-	path = docrab-worker
-	url = https://github.com/pintariching/docrab-worker.git

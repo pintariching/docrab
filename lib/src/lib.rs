@@ -13,43 +13,38 @@ impl RoutingKeys {
 }
 
 #[derive(Serialize, Deserialize)]
-pub enum Job {
-	Convert,
+pub enum Task {
+	ConvertToPng,
+	CreatePreviews,
 	Ocr,
 	Delete,
 }
 
-impl Job {
+impl Task {
 	pub fn to_string(&self) -> String {
 		match self {
-			Job::Convert => String::from("CONVERT"),
-			Job::Ocr => String::from("OCR"),
-			Job::Delete => String::from("DELETE"),
+			Task::ConvertToPng => String::from("CONVERT_TO_PNG"),
+			Task::CreatePreviews => String::from("CREATE_PREVIEWS"),
+			Task::Ocr => String::from("OCR"),
+			Task::Delete => String::from("DELETE"),
 		}
 	}
 
-	pub fn from_string(input: &str) -> Result<Job, ()> {
+	pub fn from_string(input: &str) -> Result<Task, ()> {
 		match input {
-			"CONVERT" => Ok(Job::Convert),
-			"OCR" => Ok(Job::Ocr),
-			"DELETE" => Ok(Job::Delete),
+			"CONVERT_TO_PNG" => Ok(Task::ConvertToPng),
+			"CREATE_PREVIEWS" => Ok(Task::CreatePreviews),
+			"OCR" => Ok(Task::Ocr),
+			"DELETE" => Ok(Task::Delete),
 			_ => Err(())
 		}
 	}
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct File {
-	pub file: Vec<u8>,
-	pub file_name: String,
-	pub file_size: usize,
-	pub uuid: String
-}
-
-#[derive(Serialize, Deserialize)]
 pub struct JobPayload {
-	pub job: Job,
-	pub file: File
+	pub task: Vec<Task>,
+	pub document_file_id: i64
 }
 
 impl JobPayload {

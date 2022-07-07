@@ -1,5 +1,6 @@
-docrab-lib/target
-docrab-lib/*.lock
+*/target
+*/node_modules
+.postgres
 files
 .env
 */.env

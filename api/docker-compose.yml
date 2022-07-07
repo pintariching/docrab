@@ -1,0 +1,32 @@
+services:
+  docrab-postgres:
+    image: postgres
+    container_name: docrab-postgres
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_PASSWORD: docrab
+      POSTGRES_USER: docrab
+      POSTGRES_DB: docrab
+      PGDATA: /data/postgres
+    volumes:
+      - ../.postgres:/data/postgres
+    networks:
+      - docrab-net
+  
+  docrab-rabbitmq:
+    image: rabbitmq:management
+    container_name: docrab-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: docrab
+      RABBITMQ_DEFAULT_PASS: docrab
+    ports:
+      - 5672:5672
+      - 15672:15672
+    networks:
+      - docrab-net
+
+networks:
+  docrab-net:
+    name: docrab-net
+    

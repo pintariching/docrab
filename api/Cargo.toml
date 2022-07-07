@@ -1,0 +1,24 @@
+[package]
+name = "docrab-api"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rocket = { git = "https://github.com/pintariching/Rocket", branch = "master", default-features = false, features = [ "json" ] }
+rocket_sync_db_pools = { git = "https://github.com/pintariching/Rocket", branch = "master", features = [ "diesel_postgres_pool" ]}
+diesel = { version = "2.0.0-rc.0", features = ["postgres", "chrono", "numeric"] }
+diesel_migrations = "2.0.0-rc.0"
+
+serde = "1.0.137"
+validator = { git = "https://github.com/pintariching/validator", branch = "master", features = [ "derive" ] }
+uuid = { version = "1.1.2", features = [ "v4" ]}
+lapin = "2.1.1"
+convert_case = "0.5.0"
+lazy_static = "1.4.0"
+regex = "1.5.6"
+dotenv = "0.15.0"
+
+docrab-lib = { path = "../docrab-lib" }
+
