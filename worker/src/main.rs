@@ -1,13 +1,18 @@
-use lapin::{ConnectionProperties, Connection};
+use std::env;
+use std::os::unix::thread;
+use std::sync::{Arc, Mutex};
+use dotenvy::dotenv;
+
+use lapin::{ConnectionProperties};
 use lapin::message::DeliveryResult;
 use lapin::types::FieldTable;
 use lapin::options::{BasicConsumeOptions, BasicAckOptions};
-use docrab_lib::{RoutingKeys, Job, EnvironmentVariable, get_environment_variable};
+use sqlx::postgres::PgPoolOptions;
+
+use docrab_lib::{JobPayload, RoutingKeys};
+use tasks::delegate_task;
 
 mod tasks;
-
-mod config;
-use config::JobMessage;
 
 #[tokio::main]
 async fn main() {
@@ -15,9 +20,11 @@ async fn main() {
 		.with_executor(tokio_executor_trait::Tokio::current())
 		.with_reactor(tokio_reactor_trait::Tokio);
 
-	let connection = Connection::connect(
-			&get_environment_variable(EnvironmentVariable::RabbitMQUrl),
-			options
+	dotenv().ok();
+
+	let connection = lapin::Connection::connect(
+			&env::var("RABBITMQ_URL").expect("RABBITMQ_URL environment variable is not set"),
+		ConnectionProperties::default()
 		)
 		.await
 		.unwrap();
@@ -27,86 +34,56 @@ async fn main() {
 	let consumer = channel
 		.basic_consume(
 			RoutingKeys::WorkerQueue.to_string(), 
-				"docrab-converter-worker", 
+				"docrab-worker", 
 				BasicConsumeOptions::default(),
 				FieldTable::default()
 		)
 		.await
 		.unwrap();
-	
 
+	let pool = PgPoolOptions::new()
+        .max_connections(5)
+        .connect(&env::var("DATABASE_URL").expect("DATABASE_URL environment variable is not set"))
+		.await
+		.unwrap();
 
-	consumer.set_delegate(move |delivery: DeliveryResult| async move {
+	consumer.set_delegate(move |delivery: DeliveryResult| async {
 		let delivery = match delivery {
 			Ok(Some(delivery)) => delivery,
 			Ok(None) => {
+				// log error
 				dbg!("Consumer got cancelled");
 				return;
 			},
 			Err(error) => {
+				// log error
 				dbg!("Failed to consume queue message: {}", error);
 				return;
 			}
 		};
 
-		let payload = match std::str::from_utf8(&delivery.data) {
-			Ok(p) => p,
+		let job_payload = match JobPayload::from_payload(&delivery.data) {
+			Ok(payload) => payload,
 			Err(e) => {
-				dbg!("Failed to convert message to text: {}", e);
-				return; 
+				// log error
+				dbg!("Error deserializing payload");
+				return;
 			}
 		};
 
-		let job_message: JobMessage = serde_json::from_str(payload,).unwrap();
+		if let Err(e) = delegate_task(job_payload, pool).await {
+			// log error
+			dbg!("Error when delegating task");
+			return;
+		};
 
-		for job_str in job_message.jobs {
-			let job = match Job::from_string(&job_str) {
-				Ok(j) => j,
-				Err(_) =>  {
-					dbg!("Failed to parse job from message");
-					break;
-				}
-			};
-
-			match job {
-				Job::Convert => {
-					dbg!("Starting job: Converting file");
-					match tasks::convert_file_task(&job_message.filename).await {
-						Ok(_) => (),
-						Err(e) => {
-							dbg!("{}", e);
-							return;
-						}
-					}
-				},
-				Job::Ocr => {
-					dbg!("Starting job: OCR on file");
-					match tasks::ocr_on_file(&job_message.filename).await {
-						Ok(_) => (),
-						Err(e) => {
-							dbg!("{}", e);
-							return;
-						}
-					}
-				},
-				Job::Delete => {
-					dbg!("Starting job: Deleting file");
-					match tasks::delete_file_task(&job_message.filename).await {
-						Ok(_) => (),
-						Err(e) => {
-							dbg!("{}", e);
-							return;
-						}
-					}
-				}
-			}
-		}
-
-		delivery
+		if let Err(e) = delivery
 			.ack(BasicAckOptions::default())
-			.await
-			.expect("Failed to ack worker job message");
+			.await {
+			// log error
+			dbg!("Failed to ack message");
+			return;
+		};
 	});
-
 	loop {}
 }

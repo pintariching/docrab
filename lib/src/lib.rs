@@ -39,6 +39,15 @@ impl Task {
 			_ => Err(())
 		}
 	}
+
+	pub fn task_to_priority(&self) -> u64 {
+		match self {
+			Task::ConvertToPng => 0,
+			Task::CreatePreviews => 1,
+			Task::Ocr => 2,
+			Task::Delete => 10,
+		}
+	}
 }
 
 #[derive(Serialize, Deserialize)]

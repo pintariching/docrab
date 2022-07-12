@@ -1,5 +1,5 @@
 use rocket::fs::TempFile;
-use serde::{Serialize, Deserialize};
+use serde::Serialize;
 use validator::Validate;
 
 use crate::models::document::Document;

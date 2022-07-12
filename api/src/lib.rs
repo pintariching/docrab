@@ -1,5 +1,5 @@
 use errors::ApiError;
-use rocket::{serde::json::Json, http::Status, fairing::AdHoc};
+use rocket::{serde::json::Json, http::Status};
 
 #[macro_use] extern crate rocket;
 #[macro_use] extern crate lazy_static;
@@ -56,10 +56,10 @@ pub fn rocket() -> _ {
 				document_tag::attach,
 				document_tag::attach_multiple,
 				document_tag::remove,
-				// document_file::fetch,
-				// document_file::get,
+				document_file::fetch,
+				document_file::get,
 				document_file::upload,
-				// document_file::delete
+				document_file::delete
 			]
 		)		
 }

@@ -1,4 +1,4 @@
-use lapin::{Connection, Channel, ConnectionProperties, Error, BasicProperties};
+use lapin::{Connection, Channel, ConnectionProperties, BasicProperties};
 use lapin::options::{QueueDeclareOptions, BasicPublishOptions};
 use lapin::types::FieldTable;
 
