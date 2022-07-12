@@ -12,7 +12,7 @@ impl RoutingKeys {
 	}
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, PartialEq)]
 pub enum Task {
 	ConvertToPng,
 	CreatePreviews,
